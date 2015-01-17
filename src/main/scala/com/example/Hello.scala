@@ -30,6 +30,9 @@ object Hello extends App {
 
   val route: Flow[HttpRequest, HttpResponse] = getFromFile("src/main/resources/hello.html")
 
-  binding startHandlingWith route
+  binding startHandlingWith route.map { r =>
+    println(r)
+    r
+  }
 
 }
