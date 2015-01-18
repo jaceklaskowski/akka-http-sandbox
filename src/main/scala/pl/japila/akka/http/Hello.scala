@@ -1,4 +1,4 @@
-package com.example
+package pl.japila.akka.http
 
 import java.io.File
 
@@ -16,9 +16,8 @@ object Hello extends App {
                                         """)
   implicit val system = ActorSystem("ServiceDiscovery", conf)
 
-  import system.dispatcher
-
   import akka.http.Http
+  import pl.japila.akka.http.Hello.system.dispatcher
   val binding = Http().bind("localhost", 8080)
 
   import akka.stream.FlowMaterializer
@@ -33,6 +32,9 @@ object Hello extends App {
   binding startHandlingWith route.map { r =>
     println(r)
     r
+  }.mapConcat { r =>
+    // does nothing, but show the type allows the method `mapConcat`
+    collection.immutable.Seq(r)
   }
 
 }
