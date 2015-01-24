@@ -8,5 +8,8 @@ Revolver.settings
 
 initialCommands :=
   """
+    |import akka.actor.ActorSystem
     |import akka.http.server._
+    |import akka.stream._
+    |import akka.stream.scaladsl._
   """.stripMargin
