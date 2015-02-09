@@ -26,8 +26,8 @@ object Hello extends App {
 
   val binding = Http().bind("localhost", 8080)
 
-  import akka.stream.FlowMaterializer
-  implicit val fm = FlowMaterializer()
+  import akka.stream.ActorFlowMaterializer
+  implicit val mat = ActorFlowMaterializer()
 
   import akka.http.server.Directives._
 
