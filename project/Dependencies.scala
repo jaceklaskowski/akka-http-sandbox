@@ -1,9 +1,9 @@
 import sbt._
 
 object Version {
-  val akkaHttp  = "1.0-M2"
+  val akkaHttp  = "1.0-M3"
   val scala     = "2.11.5"
-  val specs2    = "2.4.15"
+  val specs2    = "2.4.16"
 }
 
 object Library {
