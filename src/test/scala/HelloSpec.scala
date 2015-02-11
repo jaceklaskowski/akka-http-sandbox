@@ -18,15 +18,19 @@ class HelloSpec extends Specification { def is = s2"""
     override protected def requestStrategy: RequestStrategy = WatermarkRequestStrategy(10)
 
     override def receive: Actor.Receive = {
-      case s: String => sender() ! "thanks"
+      case s =>
+        println(s"${Thread.currentThread()}...received: [$s]")
+        // sender() ! "thanks"
     }
   }
 
   def e1 = {
-    implicit val system = ActorSystem("reactive-tweets")
+    implicit val system = ActorSystem("akka-http-sandbox")
     implicit val mat = ActorFlowMaterializer()
 
     val subscriber = Props(new MyActor)
+
+    println(s"${Thread.currentThread()}")
 
     Source(0 to 3).map(_ * 2).runWith(Sink(subscriber))
 
