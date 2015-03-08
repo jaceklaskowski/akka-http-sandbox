@@ -3,13 +3,17 @@ package pl.japila.akka.http
 import java.io.File
 
 import akka.actor.{Props, ActorSystem}
+import akka.http.Http.{IncomingConnection, ServerBinding}
 import akka.http.marshallers.sprayjson.SprayJsonSupport
 import akka.http.model.{HttpRequest, HttpResponse}
-import akka.stream.scaladsl.Flow
+import akka.http.server
+import akka.stream.scaladsl.{Sink, Source, Flow}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import pl.japila.akka.http.HelloActor.Person
 import spray.json.DefaultJsonProtocol
+
+import scala.concurrent.Future
 
 object Hello extends App {
   println("Hello, Akka-HTTP world!")
@@ -24,10 +28,10 @@ object Hello extends App {
   import akka.http.Http
   import system.dispatcher
 
-  val binding = Http().bind("localhost", 8080)
-
   import akka.stream.ActorFlowMaterializer
   implicit val mat = ActorFlowMaterializer()
+
+  val binding: Source[IncomingConnection, Future[ServerBinding]] = Http().bind("localhost", 8080)
 
   import akka.http.server.Directives._
 
@@ -35,7 +39,6 @@ object Hello extends App {
     implicit val personFormat = jsonFormat1(Person)
   }
   import PersonJsonSupport._
-
   import HelloActor.Person
 
   val updatePerson = (person: Person) => {
@@ -48,18 +51,15 @@ object Hello extends App {
     }
   }
 
-  val route: Flow[HttpRequest, HttpResponse] =
+  val route: server.Route =
     (post & path("actor")) {
       handleWith(updatePerson)
     } ~
     getFromFile("src/main/resources/hello.html")
 
-  binding startHandlingWith route.map { r =>
-    println(r)
-    r
-  }.mapConcat { r =>
-    // does nothing, but show the type allows the method `mapConcat`
-    collection.immutable.Seq(r)
-  }
+  binding.runWith(Sink.foreach { connection =>
+    println("Accepted new connection from " + connection.remoteAddress)
+    connection.handleWith(route)
+  })
 
 }
