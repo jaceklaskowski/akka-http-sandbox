@@ -3,37 +3,36 @@ package pl.japila.akka.http
 import java.io.File
 
 import akka.actor.{Props, ActorSystem}
-import akka.http.Http.{IncomingConnection, ServerBinding}
-import akka.http.marshallers.sprayjson.SprayJsonSupport
-import akka.http.model.{HttpRequest, HttpResponse}
-import akka.http.server
+import akka.http.scaladsl.Http.{IncomingConnection, ServerBinding}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.scaladsl.{Sink, Source, Flow}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import pl.japila.akka.http.HelloActor.Person
 import spray.json.DefaultJsonProtocol
+import akka.http.scaladsl.server._
 
 import scala.concurrent.Future
 
 object Hello extends App {
   println("Hello, Akka-HTTP world!")
 
-  val conf = ConfigFactory.parseString( """
+  val conf = ConfigFactory.parseString("""
     akka.loglevel         = INFO
-    akka.log-dead-letters = off
-                                        """)
+    akka.log-dead-letters = off""")
   implicit val system = ActorSystem("ServiceDiscovery", conf)
   val helloActor = system.actorOf(Props[HelloActor])
 
-  import akka.http.Http
-  import system.dispatcher
+  import akka.http.scaladsl.Http
+  implicit val ec = system.dispatcher
 
-  import akka.stream.ActorFlowMaterializer
-  implicit val mat = ActorFlowMaterializer()
+  import akka.stream.ActorMaterializer
+  implicit val mat = ActorMaterializer()
 
   val binding: Source[IncomingConnection, Future[ServerBinding]] = Http().bind("localhost", 8080)
 
-  import akka.http.server.Directives._
+  import akka.http.scaladsl.server.Directives._
 
   object PersonJsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
     implicit val personFormat = jsonFormat1(Person)
@@ -51,7 +50,7 @@ object Hello extends App {
     }
   }
 
-  val route: server.Route =
+  val route: Route =
     (post & path("actor")) {
       handleWith(updatePerson)
     } ~
